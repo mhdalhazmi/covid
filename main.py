@@ -151,7 +151,7 @@ logo = compile("""
 
 
 df_stat = df_final.copy()
-df_stat = df_stat(['Country', 'Confirmed Cases', 'Deaths'])
+df_stat = df_stat['Country', 'Confirmed Cases', 'Deaths']
 stats = html.Div([html.Div([html.H1("احصائيات الدول")], className="worldwide-title"),
         html.Div(dash_table.DataTable(
                                     id='table',
