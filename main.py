@@ -21,7 +21,7 @@ server = Flask(__name__)
 
 df_final = pd.read_csv("df_final.csv")
 df_total_stats = pd.read_csv("df_total_stats.csv")
-df_news = pd.read_csv("df_news.csv") 
+df_news = pd.read_csv("df_news.csv")
 
 mapbox_access_token = 'pk.eyJ1IjoiaGFzdHlsZSIsImEiOiJja2QwM2dtdHgwcHVhMzBwZ3F0azlpMDZtIn0.mCN0EYyBKElCkJPOO1xA7A'
 
@@ -69,7 +69,7 @@ fig.data[0].update(hovertemplate= '<b>%{hovertext}</b><br>Confirmed Cases= %{mar
 
 
 
-app = dash.Dash(__name__, external_stylesheets=['https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css',
+app = dash.Dash(__name__, server = server,external_stylesheets=['https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css',
                                                 '//use.fontawesome.com/releases/v5.0.7/css/all.css',
                                                 '/assets/style.css'])
 
