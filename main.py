@@ -77,9 +77,9 @@ nav = compile("""
     <div class="main-nav col-md">
       <div class="nav-container">
       <div class="icon">
-      <img src="./assets/icon.png" alt=""></img></div>
+      <img src="./assets/Icon.png" alt=""></img></div>
       <div class="icon">
-      <img src="./assets/mail.png" alt=""></img></div>
+      <img src="./assets/Mail.png" alt=""></img></div>
       <div class="icon">
       <img src="./assets/stats.png" alt=""></img></div>
       </div>
