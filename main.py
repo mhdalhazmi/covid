@@ -33,7 +33,7 @@ def daily_report_countries(country_code='sa'):
     return response.json()
 
 def get_daily_report_countries(df_final):
-    for index,row in df_countries_info[0:5].iterrows():
+    for index,row in df_countries_info[0:25].iterrows():
         country_code = row["alpha2code"]
         longitude = row["longitude"]
         latitude = row["latitude"]
@@ -285,6 +285,7 @@ stats = html.Div([html.Div([html.H1("احصائيات الدول")], className="
                                     style_as_list_view=True,
                                     fixed_rows={"headers": True},
                                     fill_width=True,
+                                    style_table={'height': '350px',"width": "100%", },
                                     #style_table={
                                     #    "width": "100%",
                                     #    "height": "100vh",
