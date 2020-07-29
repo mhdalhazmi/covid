@@ -17,11 +17,49 @@ import dash_table
 compile = curry(compile)(map_tag=dbc_and_default)
 
 
+def update_data():
+    test_df = pd.read_csv("df_final.csv")
+    test_df.drop(['Unnamed: 0'], axis=1, inplace=True)
+    url = "https://api.apify.com/v2/key-value-stores/SmuuI0oebnTWjRTUh/records/LATEST?disableRedirect=true"
+    response = requests.request("GET", url)
+    news = response.json()
+    df_final = pd.DataFrame(news['regionData'])
+    useless_rows = [0,1,3,4,5,8,72,158,223,224,225,226,227,228,229,86,91,103,118,124,125,126, 159, 162, 164, 165,
+                    167, 168, 181, 187, 190, 193, 199, 200, 203, 209, 213, 215, 216, 218, 219,220, 221]
+    df_final.drop(useless_rows, axis=0, inplace=True)
+    world_stats = df_final.iloc[-1]
+    df_final.drop([230], axis=0, inplace=True)
+    df_final.reset_index(drop=True, inplace=True)
+
+    test_df.update(df_final)
+    #test_df.to_csv('./df_final.csv')
+    return test_df, world_stats
+
+
+def get_news():
+
+    url = "https://covid-19-news.p.rapidapi.com/v1/covid"
+    querystring = {"lang":"en","media":"True","q":"covid"}
+    headers = {
+        'x-rapidapi-host': "covid-19-news.p.rapidapi.com",
+        'x-rapidapi-key': "46345e418cmsh542642b3ab38d2fp12ab20jsne42343ea4346"
+        }
+    response = requests.request("GET", url, headers=headers, params=querystring)
+    news = response.json()['articles']
+    df_news = pd.DataFrame(news, columns= ['title','summary', 'link', 'language', 'clean_url'])
+    #df_news = df_news[df_news['clean_url'] == 'cdc.gov']
+
+    return df_news
+
+
 server = Flask(__name__)
 
-df_final = pd.read_csv("df_final.csv")
-df_total_stats = pd.read_csv("df_total_stats.csv")
-df_news = pd.read_csv("df_news.csv")
+df_final, df_total_stats = update_data()
+
+#print(df_final.dtypes())
+df_news = get_news()
+
+
 
 mapbox_access_token = 'pk.eyJ1IjoiaGFzdHlsZSIsImEiOiJja2QwM2dtdHgwcHVhMzBwZ3F0azlpMDZtIn0.mCN0EYyBKElCkJPOO1xA7A'
 
@@ -39,18 +77,21 @@ color_scale = [
         "#dc9e00",
         ]
 
+# x=[]
+# for i in range(len(df_final['country'])):
+#     x.append(i)
 
 px.set_mapbox_access_token(mapbox_access_token)
-df_final['Size'] = df_final['Confirmed Cases']**0.77
+df_final['Size'] = df_final['totalCases']**.1
 
 fig = px.scatter_mapbox(df_final,
-                        lat="Latitude", lon="Longitude",
-                        color="Confirmed Cases", size="Size",
-                        hover_name="Country",
-                        hover_data=["Confirmed Cases", "Recovered Cases","Critical Cases","Deaths"],
+                        lat="latitude", lon="longitude",
+                        color="totalCases", size="Size",
+                        hover_name="country",
+                        hover_data=["totalCases", "totalRecovered","seriousCritical","totalDeaths"],
                         title= 'World-wide Covid-19 status',
                         color_continuous_scale=color_scale,
-                        zoom=15)
+                        zoom=1)
 fig.layout.update(
         margin={"r": 0, "t": 0, "l": 0, "b": 0},
         # This takes away the colorbar on the right hand side of the plot
@@ -58,14 +99,9 @@ fig.layout.update(
         mapbox_style='mapbox://styles/hastyle/ckd04vx3w0orf1irxdgxzotia',
         mapbox=dict(center=dict(lat=40.721319,lon=-73.987130), zoom=1),
         )
-fig.data[0].update(hovertemplate= '<b>%{hovertext}</b><br>Confirmed Cases= %{marker.color}<br>Recovered Cases= %{customdata[1]}<br>Critical Cases= %{customdata[2]}<br>Deaths= %{customdata[3]}')
+print(fig.data[0].hovertemplate)
+#fig.data[0].update(hovertemplate= '<b>%{hovertext}</b><br>Total Confirmed Cases= %{marker.color}<br>Total Recovered Cases= %{customdata[1]}<br>Total Critical Cases= %{customdata[2]}<br>Total  Deaths= %{customdata[3]}')
 
-#app.layout = html.Div([
-#    dcc.Graph(
-#        id='confirmed-map',
-#        figure=fig
-#    )
-#])
 
 
 
@@ -99,7 +135,7 @@ content = compile("""
                 </div>
                 <div class="right-text-block">
                   <p>المصابون</p>
-                  <p>{f"{df_total_stats['confirmed'][0]:,}"}</p>
+                  <p>{f"{df_total_stats['totalCases']:,}"}</p>
                 </div>
               </div>
               <div class="worldwide-icon">
@@ -108,7 +144,7 @@ content = compile("""
                 </div>
                 <div class="right-text-block">
                   <p>الوفيات</p>
-                  <p>{f"{df_total_stats['deaths'][0]:,}"}</p>
+                  <p>{f"{df_total_stats['totalDeaths']:,}"}</p>
                 </div>
               </div>
               <div class="worldwide-icon">
@@ -117,7 +153,7 @@ content = compile("""
                 </div>
                 <div class="right-text-block">
                   <p>الحالات الخطرة</p>
-                  <p>{f"{df_total_stats['critical'][0]:,}"}</p>
+                  <p>{f"{df_total_stats['seriousCritical']:,}"}</p>
                 </div>
               </div>
               <div class="worldwide-icon">
@@ -126,7 +162,7 @@ content = compile("""
                 </div>
                 <div class="right-text-block">
                   <p>المتعافون</p>
-                  <p>{f"{df_total_stats['recovered'][0]:,}"}</p>
+                  <p>{f"{df_total_stats['totalRecovered']:,}"}</p>
                 </div>
               </div>
 
@@ -151,7 +187,7 @@ logo = compile("""
 
 
 df_stat = df_final.copy()
-df_stat = df_stat[['Country', 'Confirmed Cases', 'Deaths']]
+df_stat = df_stat[['country', 'totalCases', 'totalDeaths']]
 stats = html.Div([html.Div([html.H1("احصائيات الدول")], className="worldwide-title"),
         html.Div(dash_table.DataTable(
                                     id='table',
@@ -190,21 +226,21 @@ stats = html.Div([html.Div([html.H1("احصائيات الدول")], className="
                                     },
                                     style_cell_conditional=[
                                         {
-                                            "if": {"column_id": "Country",},
+                                            "if": {"column_id": "country",},
                                             "minWidth": "3vw",
                                             "width": "3vw",
                                             "maxWidth": "3vw",
                                             "textAlign": "left"
                                         },
                                         {
-                                            "if": {"column_id": "Confirmed Cases",},
+                                            "if": {"column_id": "totalCases",},
                                             "color": "#F4B000",
                                             "minWidth": "3vw",
                                             "width": "3vw",
                                             "maxWidth": "3vw",
                                         },
                                         {
-                                            "if": {"column_id": "Deaths",},
+                                            "if": {"column_id": "totalDeaths",},
                                             "color": "#E55465",
                                             "minWidth": "3vw",
                                             "width": "3vw",
