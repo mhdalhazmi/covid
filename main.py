@@ -14,25 +14,24 @@ from toolz import curry
 from htexpr.mappings import dbc_and_default
 import dash_table
 
-compile = curry(compile)(map_tag=dbc_and_default)
+#compile = curry(compile)(map_tag=dbc_and_default)
 
 
 def update_data():
     test_df = pd.read_csv("df_final.csv")
-    test_df.drop(['Unnamed: 0'], axis=1, inplace=True)
+    test_df.drop(['Unnamed: 0', 'Unnamed: 0.1'], axis=1, inplace=True)
     url = "https://api.apify.com/v2/key-value-stores/SmuuI0oebnTWjRTUh/records/LATEST?disableRedirect=true"
     response = requests.request("GET", url)
     news = response.json()
     df_final = pd.DataFrame(news['regionData'])
     useless_rows = [0,1,3,4,5,8,72,158,223,224,225,226,227,228,229,86,91,103,118,124,125,126, 159, 162, 164, 165,
-                    167, 168, 181, 187, 190, 193, 199, 200, 203, 209, 213, 215, 216, 218, 219,220, 221]
+                    167, 168, 181, 187, 190, 193, 199, 200, 203, 209, 213, 215, 216, 218, 219,220, 221, 71, 83, 84]
     df_final.drop(useless_rows, axis=0, inplace=True)
     world_stats = df_final.iloc[-1]
     df_final.drop([230], axis=0, inplace=True)
-    df_final.reset_index(drop=True, inplace=True)
-
+    #df_final.reset_index(drop=True, inplace=True)
     test_df.update(df_final)
-    #test_df.to_csv('./df_final.csv')
+
     return test_df, world_stats
 
 
@@ -83,15 +82,15 @@ color_scale = [
 
 px.set_mapbox_access_token(mapbox_access_token)
 df_final['Size'] = df_final['totalCases']**.1
-
 fig = px.scatter_mapbox(df_final,
                         lat="latitude", lon="longitude",
                         color="totalCases", size="Size",
-                        hover_name="country",
+                        hover_name='country',
                         hover_data=["totalCases", "totalRecovered","seriousCritical","totalDeaths"],
                         title= 'World-wide Covid-19 status',
+                        #text = 'country',
                         color_continuous_scale=color_scale,
-                        zoom=1)
+                        zoom=10)
 fig.layout.update(
         margin={"r": 0, "t": 0, "l": 0, "b": 0},
         # This takes away the colorbar on the right hand side of the plot
@@ -99,8 +98,8 @@ fig.layout.update(
         mapbox_style='mapbox://styles/hastyle/ckd04vx3w0orf1irxdgxzotia',
         mapbox=dict(center=dict(lat=40.721319,lon=-73.987130), zoom=1),
         )
-print(fig.data[0].hovertemplate)
-#fig.data[0].update(hovertemplate= '<b>%{hovertext}</b><br>Total Confirmed Cases= %{marker.color}<br>Total Recovered Cases= %{customdata[1]}<br>Total Critical Cases= %{customdata[2]}<br>Total  Deaths= %{customdata[3]}')
+#print(fig.data[0].hovertemplate)
+fig.data[0].update(hovertemplate= '<b>%{hovertext}</b><br>totalCases=%{marker.color}<br>totalRecovered=%{customdata[1]}<br>seriousCritical=%{customdata[2]}<br>totalDeaths=%{customdata[3]}')
 
 
 
@@ -108,6 +107,8 @@ print(fig.data[0].hovertemplate)
 app = dash.Dash(__name__, server = server,external_stylesheets=['https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css',
                                                 '//use.fontawesome.com/releases/v5.0.7/css/all.css',
                                                 '/assets/style.css'])
+
+app.title = 'My app'
 
 nav = compile("""
     <div class="main-nav col-md">
